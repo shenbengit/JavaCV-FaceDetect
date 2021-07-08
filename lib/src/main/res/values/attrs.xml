@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="FaceDetectView">
+        <attr name="fdv_cameraFacing" format="enum">
+            <enum name="back" value="0" />
+            <enum name="front" value="1" />
+        </attr>
+        <attr name="fdv_keepMaxFace" format="boolean" />
+        <attr name="fdv_previewMirror" format="boolean" />
+        <attr name="fdv_classifierFileRaw" format="reference" />
+
+        <attr name="fdv_drawFaceRect" format="boolean" />
+        <attr name="fdv_faceRectStrokeColor" format="color" />
+        <attr name="fdv_faceRectStrokeWidth" format="dimension" />
+
+
+    </declare-styleable>
+
+    <declare-styleable name="FaceRectView">
+        <attr name="frv_strokeColor" format="color" />
+        <attr name="frv_strokeWidth" format="dimension" />
+    </declare-styleable>
+</resources>

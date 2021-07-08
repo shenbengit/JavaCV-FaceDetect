@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <com.shencoder.javacv_facedetect.FaceDetectView
+        android:id="@+id/fdv"
+        android:layout_width="500dp"
+        android:layout_height="500dp"
+        app:fdv_cameraFacing="back"
+        app:fdv_classifierFileRaw="@raw/haarcascade_frontalface_alt"
+        app:fdv_drawFaceRect="true"
+        app:fdv_faceRectStrokeColor="@color/design_default_color_error"
+        app:fdv_faceRectStrokeWidth="3dp"
+        app:fdv_keepMaxFace="true"
+        app:fdv_previewMirror="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
