@@ -2,7 +2,6 @@ package com.shencoder.javacv_facedetect;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,15 +20,13 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 
-import com.arcsoft.imageutil.ArcSoftImageFormat;
-import com.arcsoft.imageutil.ArcSoftImageUtil;
-import com.arcsoft.imageutil.ArcSoftImageUtilError;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.size.SizeSelector;
+import com.shencoder.javacv_facedetect.util.FaceRectTransformerUtil;
 
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.Rect;
@@ -42,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,7 +55,7 @@ import static org.bytedeco.opencv.global.opencv_core.CV_8UC1;
  * @date 2021/7/7 10:37
  * @email 714081644@qq.com
  */
-public class FaceDetectView extends FrameLayout implements LifecycleObserver {
+public class FaceDetectCameraView extends FrameLayout implements LifecycleObserver {
     private static final String TAG = "FaceDetectView";
     protected static final int CAMERA_BACK = 0;
     protected static final int CAMERA_FRONT = 1;
@@ -73,7 +69,7 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
 
     protected OnFaceDetectListener mOnFaceDetectListener;
     private CascadeClassifier mClassifier;
-    protected Mat mGrayImage;
+    protected Mat mGrayMat;
     protected final RectVector mFaceRectVector = new RectVector();
 
     /**
@@ -86,7 +82,7 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
     /**
      * 仅检测最大人脸
      */
-    private volatile boolean keepMaxFace = false;
+    private volatile boolean keepMaxFace = true;
     /**
      * 是否镜像预览
      * 左右镜像
@@ -98,6 +94,12 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
      * 是否绘制人脸框
      */
     private volatile boolean drawFaceRect = true;
+
+    /**
+     * 需要重新推送人脸数据
+     */
+    private volatile boolean needRetry = false;
+
     /**
      * 人脸框集合
      */
@@ -109,33 +111,37 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
     /**
      * 转换用于画人脸框的位置集合
      */
-    private final List<android.graphics.Rect> drawFaceRectList = new ArrayList<>();
+    private final List<android.graphics.Rect> drawFaceRectList = new ArrayList<>(10);
     protected final Handler mHandler = new Handler(Looper.getMainLooper());
-
+    private final Runnable retryRunnable = () -> {
+        if (isAnybody) {
+            //仅在有人的情况下执行操作
+            needRetry = true;
+        }
+    };
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-
-    public FaceDetectView(@NonNull Context context) {
+    public FaceDetectCameraView(@NonNull Context context) {
         this(context, null);
     }
 
-    public FaceDetectView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public FaceDetectCameraView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public FaceDetectView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public FaceDetectCameraView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        LayoutInflater.from(context).inflate(R.layout.layout_face_detect, this);
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.FaceDetectView);
-        int cameraFacing = typedArray.getInteger(R.styleable.FaceDetectView_fdv_cameraFacing, CAMERA_BACK);
-        boolean keepMaxFace = typedArray.getBoolean(R.styleable.FaceDetectView_fdv_keepMaxFace, false);
-        boolean previewMirror = typedArray.getBoolean(R.styleable.FaceDetectView_fdv_previewMirror, false);
-        boolean drawFaceRect = typedArray.getBoolean(R.styleable.FaceDetectView_fdv_drawFaceRect, true);
-        int strokeColor = typedArray.getColor(R.styleable.FaceDetectView_fdv_faceRectStrokeColor, Color.GREEN);
-        float strokeWidth = typedArray.getDimension(R.styleable.FaceDetectView_fdv_faceRectStrokeWidth, 2f);
-        int classifierFileRes = typedArray.getResourceId(R.styleable.FaceDetectView_fdv_classifierFileRaw, R.raw.haarcascade_frontalface_alt);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.FaceDetectCameraView);
+        int cameraFacing = typedArray.getInteger(R.styleable.FaceDetectCameraView_fdv_cameraFacing, CAMERA_BACK);
+        boolean keepMaxFace = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_keepMaxFace, true);
+        boolean previewMirror = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_previewMirror, false);
+        boolean drawFaceRect = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_drawFaceRect, true);
+        int strokeColor = typedArray.getColor(R.styleable.FaceDetectCameraView_fdv_faceRectStrokeColor, Color.GREEN);
+        float strokeWidth = typedArray.getDimension(R.styleable.FaceDetectCameraView_fdv_faceRectStrokeWidth, 2f);
+        int classifierFileRes = typedArray.getResourceId(R.styleable.FaceDetectCameraView_fdv_classifierFileRaw, R.raw.haarcascade_frontalface_alt);
         typedArray.recycle();
 
+        LayoutInflater.from(context).inflate(R.layout.layout_face_detect, this);
         mCameraView = findViewById(R.id.cameraView);
         mFaceRectView = findViewById(R.id.faceRectView);
 
@@ -166,22 +172,15 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
             if (mClassifier != null && frame.getDataClass() == byte[].class) {
                 int width = frame.getSize().getWidth();
                 int height = frame.getSize().getHeight();
-                Mat mat = mGrayImage;
+                Mat mat = mGrayMat;
                 if (needInitGrayMat(mat, width, height)) {
                     mat = initGrayImage(width, height);
-                    mGrayImage = mat;
+                    mGrayMat = mat;
                 }
                 processImage(mClassifier, mat, mFaceRectVector, frame.getData(), width, height);
             }
         });
-        executorService.submit(() -> {
-            try {
-                loadClassifierCascade(classifierFileRes);
-            } catch (Exception exception) {
-                Log.e(TAG, "loadClassifierCascade exception: " + exception.getMessage());
-
-            }
-        });
+        loadClassifierCascade(classifierFileRes, null);
     }
 
     public void setLifecycleOwner(@Nullable LifecycleOwner owner) {
@@ -208,21 +207,23 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    public void start() {
+    public void open() {
         mCameraView.open();
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    public void stop() {
+    public void close() {
         mCameraView.close();
+        mFaceRectView.clearFaceRect();
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void destroy() {
         mCameraView.destroy();
-        if (mGrayImage != null) {
-            mGrayImage.release();
+        if (mGrayMat != null) {
+            mGrayMat.release();
         }
+        mHandler.removeCallbacksAndMessages(null);
     }
 
     public void setPreviewStreamSize(@NonNull SizeSelector selector) {
@@ -259,6 +260,26 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
 
     public void setStrokeColor(@ColorInt int color) {
         mFaceRectView.setStrokeColor(color);
+    }
+
+    /**
+     * 重试操作
+     * 为了再一次执行{@link OnFaceDetectListener#somebodyFirstFrame(byte[], int, int, List)}
+     * 因为只有首次识别到有人才会调用
+     */
+    public void needRetry() {
+        needRetryDelay(0);
+    }
+
+    /**
+     * 重试操作
+     * 为了再一次执行{@link OnFaceDetectListener#somebodyFirstFrame(byte[], int, int, List)}
+     * 因为只有首次识别到有人才会调用
+     *
+     * @param delayMillis 延迟时间
+     */
+    public void needRetryDelay(long delayMillis) {
+        mHandler.postDelayed(retryRunnable, delayMillis);
     }
 
     private Facing getCameraFacing(int cameraFacing) {
@@ -310,6 +331,19 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
         mHandler.post(() -> {
             if (mOnFaceDetectListener != null) {
                 mOnFaceDetectListener.nobody();
+            }
+        });
+    }
+
+    public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierErrorCallback callback) {
+        executorService.submit(() -> {
+            try {
+                loadClassifierCascade(resId);
+            } catch (Exception exception) {
+                Log.e(TAG, "loadClassifierCascade exception: " + exception.getMessage());
+                if (callback != null) {
+                    callback.onError(exception);
+                }
             }
         });
     }
@@ -438,13 +472,22 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
      */
     private void judgeAnybody(boolean anybody, byte[] data, int width, int height, List<android.graphics.Rect> faceRectList) {
         if (isAnybody != anybody) {
+            mHandler.removeCallbacks(retryRunnable);
+            isAnybody = anybody;
             if (anybody) {
-                dispatchSomebodyFirstFrame(data, width, height, faceRectList);
                 dispatchOnSomebody();
+                dispatchSomebodyFirstFrame(data, width, height, faceRectList);
+                needRetry = false;
+                return;
             } else {
                 dispatchOnNobody();
             }
-            isAnybody = anybody;
+        }
+        if (anybody) {
+            if (needRetry) {
+                dispatchSomebodyFirstFrame(data, width, height, faceRectList);
+                needRetry = false;
+            }
         }
     }
 
@@ -469,65 +512,5 @@ public class FaceDetectView extends FrameLayout implements LifecycleObserver {
     private int getOutputSurfaceHeight() {
         return mCameraView.getHeight() - mCameraView.getPaddingTop() - mCameraView.getPaddingBottom();
     }
-
-    @Nullable
-    public static Bitmap cropNv21ToBitmap(byte[] nv21, int width, int height, android.graphics.Rect rect) {
-        android.graphics.Rect cropRect = getBestRect(width, height, rect);
-        cropRect.left &= ~3;
-        cropRect.top &= ~3;
-        cropRect.right &= ~3;
-        cropRect.bottom &= ~3;
-        byte[] imageData = ArcSoftImageUtil.createImageData(cropRect.width(), cropRect.height(), ArcSoftImageFormat.NV21);
-        int cropCode = ArcSoftImageUtil.cropImage(nv21, imageData, width, height, cropRect, ArcSoftImageFormat.NV21);
-        if (cropCode != ArcSoftImageUtilError.CODE_SUCCESS) {
-            return null;
-        }
-        Bitmap headBmp = Bitmap.createBitmap(cropRect.width(), cropRect.height(), Bitmap.Config.RGB_565);
-        int imageDataToBitmapCode = ArcSoftImageUtil.imageDataToBitmap(imageData, headBmp, ArcSoftImageFormat.NV21);
-        if (imageDataToBitmapCode != ArcSoftImageUtilError.CODE_SUCCESS) {
-            return null;
-        }
-        return headBmp;
-    }
-
-    @Nullable
-    public static Bitmap nv21ToBitmap(byte[] nv21, int width, int height) {
-        Bitmap headBmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-        int imageDataToBitmapCode = ArcSoftImageUtil.imageDataToBitmap(nv21, headBmp, ArcSoftImageFormat.NV21);
-        if (imageDataToBitmapCode != ArcSoftImageUtilError.CODE_SUCCESS) {
-            return null;
-        }
-        return headBmp;
-    }
-
-    /**
-     * 将图像中需要截取的Rect向外扩张一倍，若扩张一倍会溢出，则扩张到边界，若Rect已溢出，则收缩到边界
-     *
-     * @param width   图像宽度
-     * @param height  图像高度
-     * @param srcRect 原Rect
-     * @return 调整后的Rect
-     */
-    private static android.graphics.Rect getBestRect(int width, int height, @NonNull android.graphics.Rect srcRect) {
-        android.graphics.Rect rect = new android.graphics.Rect(srcRect);
-
-        // 原rect边界已溢出宽高的情况
-        int maxOverFlow = Math.max(-rect.left, Math.max(-rect.top, Math.max(rect.right - width, rect.bottom - height)));
-        if (maxOverFlow >= 0) {
-            rect.inset(maxOverFlow, maxOverFlow);
-            return rect;
-        }
-
-        // 原rect边界未溢出宽高的情况
-        int padding = rect.height() / 2;
-
-        // 若以此padding扩张rect会溢出，取最大padding为四个边距的最小值
-        if (!(rect.left - padding > 0 && rect.right + padding < width && rect.top - padding > 0 && rect.bottom + padding < height)) {
-            padding = Math.min(Math.min(Math.min(rect.left, width - rect.right), height - rect.bottom), rect.top);
-        }
-        rect.inset(-padding, -padding);
-        return rect;
-    }
-
 
 }

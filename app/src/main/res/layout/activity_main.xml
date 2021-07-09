@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.shencoder.javacv_facedetect.FaceDetectView
+    <com.shencoder.javacv_facedetect.FaceDetectCameraView
         android:id="@+id/fdv"
         android:layout_width="500dp"
         android:layout_height="500dp"
@@ -16,7 +16,7 @@
         app:fdv_faceRectStrokeColor="@color/design_default_color_error"
         app:fdv_faceRectStrokeWidth="3dp"
         app:fdv_keepMaxFace="true"
-        app:fdv_previewMirror="false"
+        app:fdv_previewMirror="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -28,5 +28,15 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnShowDialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

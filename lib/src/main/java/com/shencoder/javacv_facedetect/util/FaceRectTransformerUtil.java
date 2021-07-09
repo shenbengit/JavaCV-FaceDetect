@@ -1,4 +1,4 @@
-package com.shencoder.javacv_facedetect;
+package com.shencoder.javacv_facedetect.util;
 
 import android.graphics.Rect;
 

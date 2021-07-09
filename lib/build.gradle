@@ -15,11 +15,6 @@ android {
         consumerProguardFiles "proguard-rules.pro"
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
     sourceSets {
         main {
             jniLibs.srcDirs = ['libs']
@@ -28,9 +23,7 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.3.0'
-    api files('libs/arcsoft_image_util.jar')
-
+    compileOnly 'androidx.appcompat:appcompat:1.3.0'
     def openblas = '0.3.13'
     def javacv = "1.5.5"
     def opencv = "4.5.1"
@@ -41,7 +34,9 @@ dependencies {
     api "org.bytedeco:opencv:${opencv}-${javacv}:android-arm"
     api "org.bytedeco:opencv:${opencv}-${javacv}:android-arm64"
 
-    api 'com.otaliastudios:cameraview:2.7.1'
+    api files('libs/arcsoft_image_util.jar')
 
-    implementation 'com.squareup.okhttp3:okhttp:3.12.13'
+    api 'com.otaliastudios:cameraview:2.7.1'
+//    api 'com.github.shenbengit:LoadingDialog:1.0.5'
+    compileOnly 'com.squareup.okhttp3:okhttp:3.12.13'
 }

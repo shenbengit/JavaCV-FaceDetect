@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="FaceDetectView">
+    <declare-styleable name="FaceDetectCameraView">
         <attr name="fdv_cameraFacing" format="enum">
             <enum name="back" value="0" />
             <enum name="front" value="1" />
