@@ -37,6 +37,6 @@ dependencies {
     api files('libs/arcsoft_image_util.jar')
 
     api 'com.otaliastudios:cameraview:2.7.1'
-//    api 'com.github.shenbengit:LoadingDialog:1.0.5'
+    api 'com.github.shenbengit:LoadingDialog:1.0.5'
     compileOnly 'com.squareup.okhttp3:okhttp:3.12.13'
 }

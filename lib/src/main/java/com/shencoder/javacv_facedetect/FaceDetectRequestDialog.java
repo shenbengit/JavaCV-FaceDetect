@@ -17,8 +17,10 @@ import androidx.annotation.RawRes;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatDialog;
 
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.size.SizeSelector;
+import com.shencoder.loadingdialog.LoadingDialog;
 
 import java.io.IOException;
 import java.util.List;
@@ -67,7 +69,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
     protected boolean isShowLoadingDialog = true;
 
-    private Handler mHandler = new Handler(Looper.getMainLooper());
+    protected Dialog loadingDialog;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
 
 
     FaceDetectRequestDialog(@NonNull Builder builder) {
@@ -91,9 +94,32 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         setDrawFaceRect(drawFaceRect);
         setStrokeWidth(strokeWidth);
         setStrokeColor(strokeColor);
+        setShowLoadingDialog(builder.isShowLoadingDialog);
 
-        detectCameraView.setOnCameraListener(exception -> {
+        detectCameraView.setOnCameraListener(new OnCameraListener() {
+            @Override
+            public void onCameraOpened() {
+                OnCameraListener cameraListener = builder.cameraListener;
+                if (cameraListener != null) {
+                    cameraListener.onCameraOpened();
+                }
+            }
 
+            @Override
+            public void onCameraClosed() {
+                OnCameraListener cameraListener = builder.cameraListener;
+                if (cameraListener != null) {
+                    cameraListener.onCameraClosed();
+                }
+            }
+
+            @Override
+            public void onCameraError(@NonNull CameraException exception) {
+                OnCameraListener cameraListener = builder.cameraListener;
+                if (cameraListener != null) {
+                    cameraListener.onCameraError(exception);
+                }
+            }
         });
         detectCameraView.setOnFaceDetectListener(new OnFaceDetectListener() {
             @Override
@@ -143,6 +169,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
             detectCameraView.destroy();
         }
         mHandler.removeCallbacksAndMessages(null);
+        requestTimes = 0;
     }
 
     public void setPreviewStreamSize(@Nullable SizeSelector selector) {
@@ -283,10 +310,12 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                 ResponseBody body = response.body();
                 if (body == null) {
                     requestFailure(new IllegalArgumentException("ResponseBody is null"));
+                    mCall = null;
                     return;
                 }
                 if (!response.isSuccessful()) {
                     requestFailure(new IllegalArgumentException("request failed , response's code is : " + response.code()));
+                    mCall = null;
                     return;
                 }
                 String bodyStr = body.string();
@@ -296,10 +325,20 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         });
     }
 
+    /**
+     * @return 初始化加载中dialog
+     */
+    protected Dialog initLoadingDialog() {
+        return LoadingDialog.builder(getContext()).setHintText("请稍后...").create();
+    }
+
     private void requestStart() {
         mHandler.post(() -> {
             if (isShowLoadingDialog) {
-
+                if (loadingDialog == null) {
+                    loadingDialog = initLoadingDialog();
+                }
+                loadingDialog.show();
             }
             builder.mRequestCallback.onRequestStart();
         });
@@ -308,7 +347,9 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     private void requestFailure(Exception e) {
         mHandler.post(() -> {
             if (isShowLoadingDialog) {
-
+                if (loadingDialog != null) {
+                    loadingDialog.cancel();
+                }
             }
             builder.mRequestCallback.onRequestFailure(e);
         });
@@ -317,7 +358,9 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     private void requestSuccess(String bodyStr) {
         mHandler.post(() -> {
             if (isShowLoadingDialog) {
-
+                if (loadingDialog != null) {
+                    loadingDialog.cancel();
+                }
             }
             builder.mRequestCallback.onRequestSuccess(bodyStr);
         });
@@ -335,6 +378,9 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
          */
         final int mTheme;
 
+        boolean isShowLoadingDialog = true;
+
+        OnCameraListener cameraListener;
 
         public Builder(@NonNull Context context, Facing facing, @NonNull RequestCallback callback) {
             this(context, facing, callback, R.style.MyDialog);
@@ -345,6 +391,22 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
             this.mCameraFacing = facing;
             this.mRequestCallback = callback;
             this.mTheme = theme;
+        }
+
+        /**
+         * 是否显示加载中dialog
+         *
+         * @param showLoadingDialog true:显示，false:不显示
+         * @return
+         */
+        public Builder setShowLoadingDialog(boolean showLoadingDialog) {
+            isShowLoadingDialog = showLoadingDialog;
+            return this;
+        }
+
+        public Builder setCameraListener(OnCameraListener cameraListener) {
+            this.cameraListener = cameraListener;
+            return this;
         }
 
         public FaceDetectRequestDialog build() {

@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         Button button = findViewById(R.id.btnShowDialog);
         button.setOnClickListener(v -> dialog.show());
 
-        fdv.setLifecycleOwner(this);
+//        fdv.setLifecycleOwner(this);
     }
 
     @Override
