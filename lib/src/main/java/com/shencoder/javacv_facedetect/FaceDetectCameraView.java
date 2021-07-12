@@ -92,7 +92,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
     private volatile boolean previewMirror = false;
     /**
      * 是否限制限制检测区域
-     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     * 注意：目前限制的区域是人脸是否完整在预览View显示的画面里
      */
     private volatile boolean detectAreaLimited;
 
@@ -158,8 +158,8 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         setPreviewMirror(previewMirror);
         setDetectAreaLimited(detectAreaLimited);
         setDrawFaceRect(drawFaceRect);
-        setStrokeColor(strokeColor);
-        setStrokeWidth(strokeWidth);
+        setFaceRectStrokeColor(strokeColor);
+        setFaceRectStrokeWidth(strokeWidth);
 
         mCameraView.addCameraListener(new CameraListener() {
             @Override
@@ -261,7 +261,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
 
     /**
      * 设置是否限制检测区域
-     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     * 注意：目前限制的区域是人脸是否完整在预览View显示的画面里
      *
      * @param limited 是否限制
      */
@@ -276,11 +276,11 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         drawFaceRect = isDraw;
     }
 
-    public void setStrokeWidth(@Px float width) {
+    public void setFaceRectStrokeWidth(@Px float width) {
         mFaceRectView.setStrokeWidth(width);
     }
 
-    public void setStrokeColor(@ColorInt int color) {
+    public void setFaceRectStrokeColor(@ColorInt int color) {
         mFaceRectView.setStrokeColor(color);
     }
 

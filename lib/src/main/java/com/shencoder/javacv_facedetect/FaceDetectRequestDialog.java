@@ -2,7 +2,6 @@ package com.shencoder.javacv_facedetect;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -201,15 +200,15 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         }
     }
 
-    public void setStrokeWidth(@Px float width) {
+    public void setFaceRectStrokeWidth(@Px float width) {
         if (detectCameraView != null) {
-            detectCameraView.setStrokeWidth(width);
+            detectCameraView.setFaceRectStrokeWidth(width);
         }
     }
 
-    public void setStrokeColor(@ColorInt int color) {
+    public void setFaceRectStrokeColor(@ColorInt int color) {
         if (detectCameraView != null) {
-            detectCameraView.setStrokeColor(color);
+            detectCameraView.setFaceRectStrokeColor(color);
         }
     }
 
