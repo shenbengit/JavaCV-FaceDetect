@@ -106,7 +106,7 @@ fdv.setOnCameraListener(new OnCameraListener() {
     }
 
     @Override
-    public void onCameraError(@NonNull @NotNull CameraException exception) {
+    public void onCameraError(@NonNull CameraException exception) {
 
     }
 });
