@@ -43,35 +43,25 @@ import okhttp3.ResponseBody;
 public class FaceDetectRequestDialog extends AppCompatDialog {
     protected final Builder builder;
     protected FaceDetectCameraView detectCameraView;
-    protected OkHttpClient mOkHttpClient;
+    private OkHttpClient mOkHttpClient;
     /**
      * 当次网络请求
      */
-    protected volatile Call mCall;
+    private volatile Call mCall;
     /**
      * 网络请求的次数
      */
-    protected int requestTimes = 0;
+    private int requestTimes = 0;
     /**
      * 是否正在网络请求中
      */
-    protected volatile boolean isRequesting = false;
+    private volatile boolean isRequesting = false;
 
-    @Nullable
-    protected SizeSelector previewSizeSelector;
-    protected boolean keepMaxFace = true;
-    protected boolean previewMirror = false;
-    protected boolean drawFaceRect = true;
-    @Px
-    protected float strokeWidth = 2f;
-    @ColorInt
-    protected int strokeColor = Color.GREEN;
+    private boolean isShowLoadingDialog = true;
 
-    protected boolean isShowLoadingDialog = true;
+    private Dialog loadingDialog;
 
-    protected Dialog loadingDialog;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
-
 
     FaceDetectRequestDialog(@NonNull Builder builder) {
         super(builder.mContext, builder.mTheme);
@@ -81,19 +71,15 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     @Override
     @CallSuper
     protected void onCreate(Bundle savedInstanceState) {
-        setContentView(getLayoutId());
+        setContentView(builder.mLayoutCallback.getLayoutId());
         mOkHttpClient = builder.mRequestCallback.generateOkhttpClient(new OkHttpClient.Builder()).build();
-        detectCameraView = findViewById(getFaceDetectCameraViewId());
+        detectCameraView = findViewById(builder.mLayoutCallback.getFaceDetectCameraViewId());
         if (detectCameraView == null) {
             throw new NullPointerException("FaceDetectCameraView is null");
         }
+        builder.mLayoutCallback.initView(this);
         setCameraFacing(builder.mCameraFacing);
-        setPreviewStreamSize(previewSizeSelector);
-        setKeepMaxFace(keepMaxFace);
-        setPreviewMirror(previewMirror);
-        setDrawFaceRect(drawFaceRect);
-        setStrokeWidth(strokeWidth);
-        setStrokeColor(strokeColor);
+        setPreviewStreamSize(builder.previewSizeSelector);
         setShowLoadingDialog(builder.isShowLoadingDialog);
 
         detectCameraView.setOnCameraListener(new OnCameraListener() {
@@ -132,20 +118,11 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         });
     }
 
-    /**
-     * @return dialog's layout id
-     */
-    protected int getLayoutId() {
-        return R.layout.dialog_face_detect_request;
-    }
-
-    protected int getFaceDetectCameraViewId() {
-        return R.id.faceDetectCameraView;
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
+        builder.mLayoutCallback.onStart(this);
+
         if (detectCameraView != null) {
             detectCameraView.open();
         }
@@ -154,6 +131,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     @Override
     protected void onStop() {
         super.onStop();
+        builder.mLayoutCallback.onStop(this);
+
         if (detectCameraView != null) {
             detectCameraView.close();
         }
@@ -164,6 +143,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
      * 销毁资源
      */
     public void destroy() {
+        builder.mLayoutCallback.onDestroy(this);
+
         cancelCallTask();
         if (detectCameraView != null) {
             detectCameraView.destroy();
@@ -173,7 +154,6 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     }
 
     public void setPreviewStreamSize(@Nullable SizeSelector selector) {
-        previewSizeSelector = selector;
         if (detectCameraView != null && selector != null) {
             detectCameraView.setPreviewStreamSize(selector);
         }
@@ -186,7 +166,6 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     }
 
     public void setKeepMaxFace(boolean keepMaxFace) {
-        this.keepMaxFace = keepMaxFace;
         if (detectCameraView != null) {
             detectCameraView.setKeepMaxFace(keepMaxFace);
         }
@@ -199,28 +178,36 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
      * @param isMirror 是否镜像显示
      */
     public void setPreviewMirror(boolean isMirror) {
-        previewMirror = isMirror;
         if (detectCameraView != null) {
             detectCameraView.setPreviewMirror(isMirror);
         }
     }
 
+    /**
+     * 设置是否限制检测区域
+     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     *
+     * @param limited 是否限制
+     */
+    public void setDetectAreaLimited(boolean limited) {
+        if (detectCameraView != null) {
+            detectCameraView.setDetectAreaLimited(limited);
+        }
+    }
+
     public void setDrawFaceRect(boolean isDraw) {
-        drawFaceRect = isDraw;
         if (detectCameraView != null) {
             detectCameraView.setDrawFaceRect(isDraw);
         }
     }
 
     public void setStrokeWidth(@Px float width) {
-        strokeWidth = width;
         if (detectCameraView != null) {
             detectCameraView.setStrokeWidth(width);
         }
     }
 
     public void setStrokeColor(@ColorInt int color) {
-        strokeColor = color;
         if (detectCameraView != null) {
             detectCameraView.setStrokeColor(color);
         }
@@ -231,12 +218,14 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     }
 
     /**
+     * 设置目标检测的级联分类器
+     * <p>
      * 调用这个方法需要在{@link Dialog#show()}之后
      * <p>
      * must be called after {@link Dialog#show()}
      *
-     * @param resId
-     * @param callback
+     * @param resId    级联分类器
+     * @param callback 加载结果回调
      */
     public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierErrorCallback callback) {
         if (detectCameraView != null) {
@@ -372,25 +361,43 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
          * camera facing
          */
         final Facing mCameraFacing;
+        /**
+         * Dialog布局相关回调
+         */
+        final RequestDialogLayoutCallback mLayoutCallback;
+        /**
+         * 网络请求相关回调
+         */
         final RequestCallback mRequestCallback;
         /**
          * dialog's theme
          */
         final int mTheme;
+        /**
+         * 摄像头预览分辨率
+         */
+        @Nullable
+        SizeSelector previewSizeSelector = null;
 
         boolean isShowLoadingDialog = true;
 
         OnCameraListener cameraListener;
 
-        public Builder(@NonNull Context context, Facing facing, @NonNull RequestCallback callback) {
-            this(context, facing, callback, R.style.MyDialog);
+        public Builder(@NonNull Context context, @NonNull Facing facing, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback) {
+            this(context, facing, layoutCallback, requestCallback, R.style.FaceDetectRequestDialog);
         }
 
-        public Builder(@NonNull Context context, Facing facing, @NonNull RequestCallback callback, @StyleRes int theme) {
+        public Builder(@NonNull Context context, @NonNull Facing facing, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback, @StyleRes int theme) {
             this.mContext = context;
             this.mCameraFacing = facing;
-            this.mRequestCallback = callback;
+            this.mLayoutCallback = layoutCallback;
+            this.mRequestCallback = requestCallback;
             this.mTheme = theme;
+        }
+
+        public Builder setPreviewSizeSelector(@Nullable SizeSelector previewSizeSelector) {
+            this.previewSizeSelector = previewSizeSelector;
+            return this;
         }
 
         /**

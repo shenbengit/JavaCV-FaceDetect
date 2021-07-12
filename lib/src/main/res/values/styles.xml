@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="MyDialog" parent="ThemeOverlay.AppCompat.Dialog">
+    <style name="FaceDetectRequestDialog" parent="ThemeOverlay.AppCompat.Dialog">
         <!-- 是否有边框 -->
         <item name="android:windowFrame">@null</item>
         <!--是否在悬浮Activity之上  -->

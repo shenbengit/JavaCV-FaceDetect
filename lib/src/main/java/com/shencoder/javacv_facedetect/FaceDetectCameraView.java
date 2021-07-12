@@ -91,6 +91,13 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      */
     private volatile boolean previewMirror = false;
     /**
+     * 是否限制限制检测区域
+     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     */
+    private volatile boolean detectAreaLimited;
+
+    private final android.graphics.Rect mDetectAreaLimitedRect = new android.graphics.Rect(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    /**
      * 是否绘制人脸框
      */
     private volatile boolean drawFaceRect = true;
@@ -135,10 +142,11 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         int cameraFacing = typedArray.getInteger(R.styleable.FaceDetectCameraView_fdv_cameraFacing, CAMERA_BACK);
         boolean keepMaxFace = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_keepMaxFace, true);
         boolean previewMirror = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_previewMirror, false);
+        boolean detectAreaLimited = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_detectAreaLimited, true);
+        int classifierFileRes = typedArray.getResourceId(R.styleable.FaceDetectCameraView_fdv_classifierFileRaw, R.raw.haarcascade_frontalface_alt);
         boolean drawFaceRect = typedArray.getBoolean(R.styleable.FaceDetectCameraView_fdv_drawFaceRect, true);
         int strokeColor = typedArray.getColor(R.styleable.FaceDetectCameraView_fdv_faceRectStrokeColor, Color.GREEN);
         float strokeWidth = typedArray.getDimension(R.styleable.FaceDetectCameraView_fdv_faceRectStrokeWidth, 2f);
-        int classifierFileRes = typedArray.getResourceId(R.styleable.FaceDetectCameraView_fdv_classifierFileRaw, R.raw.haarcascade_frontalface_alt);
         typedArray.recycle();
 
         LayoutInflater.from(context).inflate(R.layout.layout_face_detect, this);
@@ -148,6 +156,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         setCameraFacing(getCameraFacing(cameraFacing));
         setKeepMaxFace(keepMaxFace);
         setPreviewMirror(previewMirror);
+        setDetectAreaLimited(detectAreaLimited);
         setDrawFaceRect(drawFaceRect);
         setStrokeColor(strokeColor);
         setStrokeWidth(strokeWidth);
@@ -250,6 +259,19 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         previewMirror = isMirror;
     }
 
+    /**
+     * 设置是否限制检测区域
+     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     *
+     * @param limited 是否限制
+     */
+    public void setDetectAreaLimited(boolean limited) {
+        if (!limited) {
+            mDetectAreaLimitedRect.set(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+        detectAreaLimited = limited;
+    }
+
     public void setDrawFaceRect(boolean isDraw) {
         drawFaceRect = isDraw;
     }
@@ -335,6 +357,12 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         });
     }
 
+    /**
+     * 设置目标检测的级联分类器
+     *
+     * @param resId    级联分类器
+     * @param callback 加载结果回调
+     */
     public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierErrorCallback callback) {
         executorService.submit(() -> {
             try {
@@ -433,27 +461,34 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         for (int i = 0; i < size; i++) {
             faceRectList.add(vector.get(i));
         }
+        //保留最大人脸
         if (keepMaxFace) {
             keepMapFace(faceRectList);
         }
 
-
-        //人脸位置数据
-        boolean anybody = size != 0;
         boolean drawRect = drawFaceRect;
-        if (anybody) {
-            for (Rect rect : faceRectList) {
-                //转换的人脸位置
-                android.graphics.Rect faceRect = FaceRectTransformerUtil.convertFaceRect(width, height, grayMat.cols(), grayMat.rows(), rect);
+        //人脸位置数据
+        for (Rect rect : faceRectList) {
+            //人脸再Camera预览数据中的位置
+            android.graphics.Rect faceRect = FaceRectTransformerUtil.convertFaceRect(width, height, grayMat.cols(), grayMat.rows(), rect);
+            //人脸在预览布局中的位置
+            android.graphics.Rect adjustRect = FaceRectTransformerUtil.adjustRect(width, height,
+                    getOutputSurfaceWidth(), getOutputSurfaceHeight(),
+                    previewMirror,
+                    faceRect);
+
+            //是否在有效区域内
+            if (detectAreaValid(adjustRect)) {
                 faceCameraRectList.add(faceRect);
+                //绘制人脸框
                 if (drawRect) {
-                    drawFaceRectList.add(FaceRectTransformerUtil.adjustRect(width, height,
-                            getOutputSurfaceWidth(), getOutputSurfaceHeight(),
-                            previewMirror,
-                            faceRect)
-                    );
+                    drawFaceRectList.add(adjustRect);
                 }
             }
+        }
+
+        boolean anybody = !faceCameraRectList.isEmpty();
+        if (anybody) {
             dispatchSomebodyFrame(data, width, height, faceCameraRectList);
         }
         judgeAnybody(anybody, data, width, height, faceCameraRectList);
@@ -468,7 +503,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      * 判断是否有人
      *
      * @param anybody      是否有人
-     * @param faceRectList
+     * @param faceRectList 人脸位置数据
      */
     private void judgeAnybody(boolean anybody, byte[] data, int width, int height, List<android.graphics.Rect> faceRectList) {
         if (isAnybody != anybody) {
@@ -485,6 +520,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
         }
         if (anybody) {
             if (needRetry) {
+                //重新分发人脸数据
                 dispatchSomebodyFirstFrame(data, width, height, faceRectList);
                 needRetry = false;
             }
@@ -511,6 +547,23 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
 
     private int getOutputSurfaceHeight() {
         return mCameraView.getHeight() - mCameraView.getPaddingTop() - mCameraView.getPaddingBottom();
+    }
+
+    /**
+     * 检测人脸是否在有效区域
+     *
+     * @param faceRect
+     * @return
+     */
+    private boolean detectAreaValid(android.graphics.Rect faceRect) {
+        boolean detectAreaValid = true;
+        if (detectAreaLimited) {
+            android.graphics.Rect limitedRect = this.mDetectAreaLimitedRect;
+            limitedRect.set(0, 0, getOutputSurfaceWidth(), getOutputSurfaceHeight());
+            detectAreaValid = limitedRect.contains(faceRect);
+        }
+        return detectAreaValid;
+
     }
 
 }

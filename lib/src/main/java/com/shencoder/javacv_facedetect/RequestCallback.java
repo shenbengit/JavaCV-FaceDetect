@@ -6,12 +6,10 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import java.io.IOException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * @author ShenBen
@@ -28,7 +26,9 @@ public interface RequestCallback {
      * @return
      */
     @NonNull
-    OkHttpClient.Builder generateOkhttpClient(OkHttpClient.Builder builder);
+    default OkHttpClient.Builder generateOkhttpClient(OkHttpClient.Builder builder) {
+        return builder;
+    }
 
     /**
      * 生成网络请求的{@link Request}
@@ -43,8 +43,13 @@ public interface RequestCallback {
     @WorkerThread
     Request.Builder generateRequest(Request.Builder builder, byte[] data, int width, int height, List<Rect> faceRectList);
 
+    /**
+     * 网络请求开始
+     */
     @MainThread
-    void onRequestStart();
+    default void onRequestStart(){
+
+    }
 
     /**
      * 网络请求失败
@@ -57,7 +62,7 @@ public interface RequestCallback {
     /**
      * 网络请求成功
      *
-     * @param bodyStr
+     * @param bodyStr 网络请求返回的String字符串
      */
     @MainThread
     void onRequestSuccess(String bodyStr);
