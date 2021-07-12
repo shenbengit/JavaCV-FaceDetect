@@ -4,19 +4,24 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.size.Size;
 import com.shencoder.javacv_facedetect.FaceDetectCameraView;
 import com.shencoder.javacv_facedetect.FaceDetectRequestDialog;
+import com.shencoder.javacv_facedetect.OnCameraListener;
 import com.shencoder.javacv_facedetect.OnFaceDetectListener;
 import com.shencoder.javacv_facedetect.RequestCallback;
 import com.shencoder.javacv_facedetect.RequestDialogLayoutCallback;
 import com.shencoder.javacv_facedetect.util.Nv21ToBitmapUtil;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,8 +40,29 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         FaceDetectCameraView fdv = findViewById(R.id.fdv);
         ImageView iv = findViewById(R.id.iv);
+        fdv.setOnCameraListener(new OnCameraListener() {
+            @Override
+            public void onCameraOpened() {
+
+            }
+
+            @Override
+            public void onCameraClosed() {
+
+            }
+
+            @Override
+            public void onCameraError(@NonNull @NotNull CameraException exception) {
+
+            }
+        });
         fdv.setPreviewStreamSize(source -> Collections.singletonList(new Size(1280, 720)));
         fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
+            @Override
+            public void somebodyFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
+
+            }
+
             @Override
             public void somebodyFirstFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
                 if (!faceRectList.isEmpty()) {
@@ -57,6 +83,15 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("当前无人--->");
             }
         });
+//        fdv.setCameraFacing(Facing.BACK);
+//        fdv.setKeepMaxFace(true);
+//        fdv.setPreviewMirror(false);
+//        fdv.setDetectAreaLimited(true);
+//        fdv.setDrawFaceRect(true);
+//        fdv.setFaceRectStrokeColor(Color.GREEN);
+//        fdv.setFaceRectStrokeWidth(2f);
+//        fdv.needRetry();
+//        fdv.needRetryDelay(1000L);
         dialog = new FaceDetectRequestDialog.Builder(this, Facing.BACK,
                 new RequestDialogLayoutCallback() {
                     @Override
