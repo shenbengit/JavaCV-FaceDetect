@@ -91,7 +91,7 @@ dependencies {
     </declare-styleable>
 ```
 >代码事例    
-```Xml
+```java
 FaceDetectCameraView fdv = findViewById(R.id.fdv);
 //设置摄像头相关回调
 fdv.setOnCameraListener(new OnCameraListener() {
@@ -110,8 +110,6 @@ fdv.setOnCameraListener(new OnCameraListener() {
 
     }
 });
-//设置相机预览分辨率
-fdv.setPreviewStreamSize(source -> Collections.singletonList(new Size(1280, 720)));
 //设置人脸检测相关回调接口
 fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
     /**
@@ -141,7 +139,12 @@ fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
     @WorkerThread
     @Override
     public void somebodyFirstFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
-
+        if (!faceRectList.isEmpty()) {
+            Rect rect = faceRectList.get(0);
+            //剪裁人脸
+            Bitmap cropBitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, rect);
+            Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
+         }
     }
         
     /**
@@ -162,5 +165,31 @@ fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
 
     }
 });
+
+//设置相机预览分辨率
+fdv.setPreviewStreamSize(source -> Collections.singletonList(new Size(1280, 720)));
+//设置摄像头
+fdv.setCameraFacing(Facing.BACK);
+//设置是否只保留最大人脸
+fdv.setKeepMaxFace(true);
+//是否镜像预览
+fdv.setPreviewMirror(false);
+//设置是否检测区域限制，注意：目前限制的区域是人脸是否完整在预览View显示的画面里
+fdv.setDetectAreaLimited(true);
+//是否绘制人脸框
+fdv.setDrawFaceRect(true);
+//设置人脸框颜色
+fdv.setFaceRectStrokeColor(Color.GREEN);
+//设置人脸框的宽度
+fdv.setFaceRectStrokeWidth(2f);
+//重试操作
+fdv.needRetry();
+//延迟重试操作
+fdv.needRetryDelay(1000L);
+
+fdv.setLifecycleOwner(this);
+//fdv.open();
+//fdv.close();
+//fdv.destroy();
 
 ```
