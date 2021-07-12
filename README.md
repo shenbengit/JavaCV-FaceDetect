@@ -93,7 +93,7 @@ dependencies {
 >代码事例    
 ```Xml
 FaceDetectCameraView fdv = findViewById(R.id.fdv);
-//
+//设置摄像头相关回调
 fdv.setOnCameraListener(new OnCameraListener() {
     @Override
     public void onCameraOpened() {
@@ -110,9 +110,9 @@ fdv.setOnCameraListener(new OnCameraListener() {
 
     }
 });
-//
+//设置相机预览分辨率
 fdv.setPreviewStreamSize(source -> Collections.singletonList(new Size(1280, 720)));
-//
+//设置人脸检测相关回调接口
 fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
     /**
      * 摄像头的预览帧画面里检测到人就会调用
@@ -128,17 +128,35 @@ fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
     public void somebodyFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
 
     }
-
+        
+    /**
+     * 检测到有人会调用一次，和{@link OnFaceDetectListener#somebody()}一起调用
+     * 子线程调用
+     *
+     * @param data         nv21
+     * @param width        camera frame width
+     * @param height       camera frame height
+     * @param faceRectList 人脸位置数据
+     */
+    @WorkerThread
     @Override
     public void somebodyFirstFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
 
     }
-
+        
+    /**
+     * 首次检测到有人时调用一次
+     */
+    @MainThread
     @Override
     public void somebody() {
 
     }
-
+        
+    /**
+     * 首次检测到无人时调用一次
+     */
+    @MainThread
     @Override
     public void nobody() {
 
