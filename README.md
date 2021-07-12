@@ -46,4 +46,22 @@ dependencies {
     implementation 'com.github.shenbengit:JavaCV-FaceDetect:Tag'
 }
 ```
+## 使用事例
+- FaceDetectCameraView
+> 布局事例
+```Xml
+    <com.shencoder.javacv_facedetect.FaceDetectCameraView
+        android:id="@+id/fdv"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        app:fdv_cameraFacing="back"
+        app:fdv_classifierFileRaw="@raw/haarcascade_frontalface_alt"
+        app:fdv_detectAreaLimited="true"
+        app:fdv_drawFaceRect="true"
+        app:fdv_faceRectStrokeColor="@color/design_default_color_error"
+        app:fdv_faceRectStrokeWidth="3dp"
+        app:fdv_keepMaxFace="true"
+        app:fdv_previewMirror="true" />
+```
+
 
