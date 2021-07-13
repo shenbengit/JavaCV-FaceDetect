@@ -62,7 +62,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
-    FaceDetectRequestDialog(@NonNull Builder builder) {
+    private FaceDetectRequestDialog(@NonNull Builder builder) {
         super(builder.mContext, builder.mTheme);
         this.builder = builder;
     }
@@ -77,7 +77,6 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
             throw new NullPointerException("FaceDetectCameraView is null");
         }
         builder.mLayoutCallback.initView(this);
-        setCameraFacing(builder.mCameraFacing);
         setPreviewStreamSize(builder.previewSizeSelector);
         setShowLoadingDialog(builder.isShowLoadingDialog);
 
@@ -152,18 +151,36 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         requestTimes = 0;
     }
 
-    public void setPreviewStreamSize(@Nullable SizeSelector selector) {
-        if (detectCameraView != null && selector != null) {
-            detectCameraView.setPreviewStreamSize(selector);
-        }
-    }
-
+    /**
+     * 设置摄像头
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param facing
+     */
     public void setCameraFacing(Facing facing) {
         if (detectCameraView != null) {
             detectCameraView.setCameraFacing(facing);
         }
     }
 
+    /**
+     * 设置预览分辨率
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param selector
+     */
+    public void setPreviewStreamSize(@Nullable SizeSelector selector) {
+        if (detectCameraView != null && selector != null) {
+            detectCameraView.setPreviewStreamSize(selector);
+        }
+    }
+
+    /**
+     * 设置仅保留最大人脸
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param keepMaxFace
+     */
     public void setKeepMaxFace(boolean keepMaxFace) {
         if (detectCameraView != null) {
             detectCameraView.setKeepMaxFace(keepMaxFace);
@@ -173,6 +190,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     /**
      * 设置预览画面是否镜像
      * 左右镜像
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
      *
      * @param isMirror 是否镜像显示
      */
@@ -184,7 +202,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
     /**
      * 设置是否限制检测区域
-     * 注意：目前限制的区域是人脸是否完整在预览画面里
+     * 注意：目前限制的区域是人脸是否完整在预览View显示的画面里
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
      *
      * @param limited 是否限制
      */
@@ -194,18 +213,36 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         }
     }
 
+    /**
+     * 设置是否绘制人脸框
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param isDraw
+     */
     public void setDrawFaceRect(boolean isDraw) {
         if (detectCameraView != null) {
             detectCameraView.setDrawFaceRect(isDraw);
         }
     }
 
+    /**
+     * 设置人脸框宽度
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param width
+     */
     public void setFaceRectStrokeWidth(@Px float width) {
         if (detectCameraView != null) {
             detectCameraView.setFaceRectStrokeWidth(width);
         }
     }
 
+    /**
+     * 设置人脸框颜色
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
+     *
+     * @param color
+     */
     public void setFaceRectStrokeColor(@ColorInt int color) {
         if (detectCameraView != null) {
             detectCameraView.setFaceRectStrokeColor(color);
@@ -218,10 +255,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
     /**
      * 设置目标检测的级联分类器
-     * <p>
-     * 调用这个方法需要在{@link Dialog#show()}之后
-     * <p>
-     * must be called after {@link Dialog#show()}
+     * 需在{@link AppCompatDialog#onCreate(Bundle)} 之后调用方可有效
      *
      * @param resId    级联分类器
      * @param callback 加载结果回调
@@ -232,6 +266,25 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         }
     }
 
+    /**
+     * 重试操作
+     */
+    public void needRetry() {
+        if (detectCameraView != null) {
+            detectCameraView.needRetry();
+        }
+    }
+
+    /**
+     * 延迟重试操作
+     *
+     * @param delayMillis
+     */
+    public void needRetryDelay(long delayMillis) {
+        if (detectCameraView != null) {
+            detectCameraView.needRetryDelay(delayMillis);
+        }
+    }
 
     /**
      * @return 获取网络请求次数
@@ -245,18 +298,6 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
      */
     public boolean isRequesting() {
         return isRequesting;
-    }
-
-    public void needRetry() {
-        if (detectCameraView != null) {
-            detectCameraView.needRetry();
-        }
-    }
-
-    public void needRetryDelay(long delayMillis) {
-        if (detectCameraView != null) {
-            detectCameraView.needRetryDelay(delayMillis);
-        }
     }
 
     /**
@@ -302,7 +343,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                     return;
                 }
                 if (!response.isSuccessful()) {
-                    requestFailure(new IllegalArgumentException("request failed , response's code is : " + response.code()));
+                    requestFailure(new IllegalArgumentException("request failed, response's code is: " + response.code() + ", response's message is: " + response.message()));
                     mCall = null;
                     return;
                 }
@@ -354,12 +395,16 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
         });
     }
 
+    public static Builder builder(@NonNull Context context, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback) {
+        return builder(context, layoutCallback, requestCallback, R.style.FaceDetectRequestDialog);
+    }
+
+    public static Builder builder(@NonNull Context context, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback, @StyleRes int theme) {
+        return new Builder(context, layoutCallback, requestCallback, theme);
+    }
+
     public static class Builder {
         final Context mContext;
-        /**
-         * camera facing
-         */
-        final Facing mCameraFacing;
         /**
          * Dialog布局相关回调
          */
@@ -380,15 +425,11 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
         boolean isShowLoadingDialog = true;
 
+        @Nullable
         OnCameraListener cameraListener;
 
-        public Builder(@NonNull Context context, @NonNull Facing facing, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback) {
-            this(context, facing, layoutCallback, requestCallback, R.style.FaceDetectRequestDialog);
-        }
-
-        public Builder(@NonNull Context context, @NonNull Facing facing, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback, @StyleRes int theme) {
+        private Builder(@NonNull Context context, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback, @StyleRes int theme) {
             this.mContext = context;
-            this.mCameraFacing = facing;
             this.mLayoutCallback = layoutCallback;
             this.mRequestCallback = requestCallback;
             this.mTheme = theme;
@@ -410,7 +451,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
             return this;
         }
 
-        public Builder setCameraListener(OnCameraListener cameraListener) {
+        public Builder setCameraListener(@Nullable OnCameraListener cameraListener) {
             this.cameraListener = cameraListener;
             return this;
         }
