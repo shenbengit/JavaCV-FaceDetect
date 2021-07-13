@@ -344,3 +344,16 @@ dialog.show();
 dialog.dismiss();//dialog.cancel();
 dialog.destroy();
 ```
+
+- Nv21ToBitmapUtil
+> nv21转bitmap工具类
+```java
+//Bitmap转base64
+Nv21ToBitmapUtil.bitmapToBase64(@Nullable Bitmap bitmap, int quality);
+//nv21转Bitmap
+Nv21ToBitmapUtil.nv21ToBitmap(@NonNull byte[] nv21, int width, int height);
+//nv21剪裁转Bitmap，注：会进行二次转换，剪裁出的图片要比提供位置矩阵的略大
+Nv21ToBitmapUtil.cropNv21ToBitmap(@NonNull byte[] nv21, int width, int height, Rect rect);
+```
+# [License](https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/LICENSE)
+
