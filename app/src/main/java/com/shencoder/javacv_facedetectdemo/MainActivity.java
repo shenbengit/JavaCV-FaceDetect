@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
-import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.size.Size;
 import com.shencoder.javacv_facedetect.AnybodyCallback;
 import com.shencoder.javacv_facedetect.FaceDetectCameraView;
@@ -25,7 +24,6 @@ import com.shencoder.javacv_facedetect.util.Nv21ToBitmapUtil;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void initView(FaceDetectRequestDialog dialog) {
-//                        Button btnClose = dialog.findViewById(R.id.btnShowDialog);
+//                        Button btnClose = dialog.findViewById(R.id.btnClose);
 
                     }
 
@@ -172,6 +170,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 })
+                .setPreviewSizeSelector(source -> Collections.singletonList(new Size(1280, 720)))
+                .setShowLoadingDialog(true)
                 .setCameraListener(exception -> Toast.makeText(MainActivity.this, "摄像头开启异常：" + exception.getMessage(), Toast.LENGTH_SHORT).show())
                 .setAnybodyCallback(new AnybodyCallback() {
                     @Override
@@ -183,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                     public void nobody() {
                         System.out.println("无人--->");
                     }
-                }).build();
+                })
+                .build();
         Button button = findViewById(R.id.btnShowDialog);
         button.setOnClickListener(v -> dialog.show());
 
