@@ -12,6 +12,9 @@ Android端基于JavaCV实现人脸检测功能
 >FaceDetectCameraView运行效果
 <img src="https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/screenshots/FaceDetectCameraView.gif" alt="FaceDetectCameraView动图演示效果" width="600px">
 
+>FaceDetectRequestDialog运行效果
+<img src="https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/screenshots/FaceDetectRequestDialog.gif" alt="FaceDetectCameraView动图演示效果" width="600px">
+
 ## 引入
 ### 将JitPack存储库添加到您的项目中(项目根目录下build.gradle文件)
 ```gradle
