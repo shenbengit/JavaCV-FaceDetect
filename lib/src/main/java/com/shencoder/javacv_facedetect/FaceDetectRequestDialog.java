@@ -113,6 +113,22 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                 }
                 httpRequest(data, width, height, faceRectList);
             }
+
+            @Override
+            public void somebody() {
+                AnybodyCallback anybodyCallback = builder.anybodyCallback;
+                if (anybodyCallback != null) {
+                    anybodyCallback.somebody();
+                }
+            }
+
+            @Override
+            public void nobody() {
+                AnybodyCallback anybodyCallback = builder.anybodyCallback;
+                if (anybodyCallback != null) {
+                    anybodyCallback.nobody();
+                }
+            }
         });
     }
 
@@ -427,6 +443,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
         @Nullable
         OnCameraListener cameraListener;
+        @Nullable
+        AnybodyCallback anybodyCallback;
 
         private Builder(@NonNull Context context, @NonNull RequestDialogLayoutCallback layoutCallback, @NonNull RequestCallback requestCallback, @StyleRes int theme) {
             this.mContext = context;
@@ -453,6 +471,11 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
 
         public Builder setCameraListener(@Nullable OnCameraListener cameraListener) {
             this.cameraListener = cameraListener;
+            return this;
+        }
+
+        public Builder setAnybodyCallback(@Nullable AnybodyCallback anybodyCallback) {
+            this.anybodyCallback = anybodyCallback;
             return this;
         }
 

@@ -15,7 +15,7 @@ import java.util.List;
  * @date 2021/7/8 8:54
  * @email 714081644@qq.com
  */
-public interface OnFaceDetectListener {
+public interface OnFaceDetectListener extends AnybodyCallback {
     /**
      * 摄像头的预览帧画面里检测到人就会调用
      * 子线程调用
@@ -31,7 +31,7 @@ public interface OnFaceDetectListener {
     }
 
     /**
-     * 检测到有人会调用一次，和{@link OnFaceDetectListener#somebody()}一起调用
+     * 检测到有人会调用一次，和{@link AnybodyCallback#somebody()}一起调用
      * 子线程调用
      *
      * @param data         nv21
@@ -44,20 +44,4 @@ public interface OnFaceDetectListener {
 
     }
 
-
-    /**
-     * 首次检测到有人时调用一次
-     */
-    @MainThread
-    default void somebody() {
-
-    }
-
-    /**
-     * 首次检测到无人时调用一次
-     */
-    @MainThread
-    default void nobody() {
-
-    }
 }

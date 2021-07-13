@@ -26,6 +26,7 @@ import java.io.IOException;
 public class Nv21ToBitmapUtil {
     private static final String TAG = "Nv21ToBitmapUtil";
 
+    @Nullable
     public static String bitmapToBase64(@Nullable Bitmap bitmap, int quality) {
         if (bitmap == null) {
             return null;
@@ -97,6 +98,7 @@ public class Nv21ToBitmapUtil {
      * @param srcRect 原Rect
      * @return 调整后的Rect
      */
+    @NonNull
     private static Rect getBestRect(int width, int height, @NonNull Rect srcRect) {
         Rect rect = new Rect(srcRect);
 

@@ -165,10 +165,13 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
             @Override
             public void onCameraOpened(@NonNull CameraOptions options) {
                 dispatchOnCameraOpened();
+                isAnybody = false;
             }
 
             @Override
             public void onCameraClosed() {
+                mFaceRectView.clearFaceRect();
+                removeRetry();
                 dispatchOnCameraClosed();
             }
 
@@ -223,7 +226,6 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void close() {
         mCameraView.close();
-        mFaceRectView.clearFaceRect();
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -290,7 +292,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      * 因为只有首次识别到有人才会调用
      */
     public void needRetry() {
-        needRetryDelay(0);
+        needRetryDelay(0L);
     }
 
     /**
@@ -301,6 +303,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      * @param delayMillis 延迟时间
      */
     public void needRetryDelay(long delayMillis) {
+        removeRetry();
         mHandler.postDelayed(retryRunnable, delayMillis);
     }
 
@@ -507,12 +510,11 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      */
     private void judgeAnybody(boolean anybody, byte[] data, int width, int height, List<android.graphics.Rect> faceRectList) {
         if (isAnybody != anybody) {
-            mHandler.removeCallbacks(retryRunnable);
+            removeRetry();
             isAnybody = anybody;
             if (anybody) {
                 dispatchOnSomebody();
                 dispatchSomebodyFirstFrame(data, width, height, faceRectList);
-                needRetry = false;
                 return;
             } else {
                 dispatchOnNobody();
@@ -563,7 +565,11 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
             detectAreaValid = limitedRect.contains(faceRect);
         }
         return detectAreaValid;
+    }
 
+    private void removeRetry() {
+        needRetry = false;
+        mHandler.removeCallbacks(retryRunnable);
     }
 
 }
