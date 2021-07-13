@@ -9,10 +9,12 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.size.Size;
+import com.shencoder.javacv_facedetect.AnybodyCallback;
 import com.shencoder.javacv_facedetect.FaceDetectCameraView;
 import com.shencoder.javacv_facedetect.FaceDetectRequestDialog;
 import com.shencoder.javacv_facedetect.OnCameraListener;
@@ -23,6 +25,7 @@ import com.shencoder.javacv_facedetect.util.Nv21ToBitmapUtil;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 //        fdv.setFaceRectStrokeWidth(2f);
 //        fdv.needRetry();
 //        fdv.needRetryDelay(1000L);
-        dialog = new FaceDetectRequestDialog.Builder(this, Facing.BACK,
+        dialog = FaceDetectRequestDialog.builder(this,
                 new RequestDialogLayoutCallback() {
                     @Override
                     public int getLayoutId() {
@@ -135,8 +138,8 @@ public class MainActivity extends AppCompatActivity {
                     @NonNull
                     @Override
                     public Request.Builder generateRequest(Request.Builder builder, byte[] data, int width, int height, List<Rect> faceRectList) {
-//                Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
-                        Bitmap bitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, faceRectList.get(0));
+                        Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
+//                        Bitmap bitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, faceRectList.get(0));
                         if (bitmap != null) {
                             String base64 = Nv21ToBitmapUtil.bitmapToBase64(bitmap, 100);
                             RequestFaceBean bean = new RequestFaceBean("imagecompare", base64);
@@ -154,19 +157,31 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onRequestFailure(Exception e) {
-                        System.out.println("网络请求失败：" + e.getMessage());
-                        dialog.needRetryDelay(1000L);
+                        Toast.makeText(MainActivity.this, "人脸识别Error：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        dialog.needRetryDelay(2000L);
                     }
 
                     @Override
                     public void onRequestSuccess(String bodyStr) {
                         ResultBean resultBean = GsonUtil.jsonToBean(bodyStr, ResultBean.class);
                         if (resultBean.getResCode() == 1) {
-                            System.out.println("人脸识别成功:" + resultBean.getData().getUserName());
+                            Toast.makeText(MainActivity.this, "人脸识别成功:" + resultBean.getData().getUserName(), Toast.LENGTH_SHORT).show();
                         } else {
-                            System.out.println("人脸识别失败");
-                            dialog.needRetryDelay(1000L);
+                            Toast.makeText(MainActivity.this, "人脸识别失败", Toast.LENGTH_SHORT).show();
+                            dialog.needRetryDelay(2000L);
                         }
+                    }
+                })
+                .setCameraListener(exception -> Toast.makeText(MainActivity.this, "摄像头开启异常：" + exception.getMessage(), Toast.LENGTH_SHORT).show())
+                .setAnybodyCallback(new AnybodyCallback() {
+                    @Override
+                    public void somebody() {
+                        System.out.println("有人--->");
+                    }
+
+                    @Override
+                    public void nobody() {
+                        System.out.println("无人--->");
                     }
                 }).build();
         Button button = findViewById(R.id.btnShowDialog);
