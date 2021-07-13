@@ -53,7 +53,7 @@ public class Nv21ToBitmapUtil {
      * @return
      */
     @Nullable
-    public static Bitmap nv21ToBitmap(byte[] nv21, int width, int height) {
+    public static Bitmap nv21ToBitmap(@NonNull byte[] nv21, int width, int height) {
         Bitmap headBmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         int result = ArcSoftImageUtil.imageDataToBitmap(nv21, headBmp, ArcSoftImageFormat.NV21);
         if (result != ArcSoftImageUtilError.CODE_SUCCESS) {
@@ -73,7 +73,7 @@ public class Nv21ToBitmapUtil {
      * @return
      */
     @Nullable
-    public static Bitmap cropNv21ToBitmap(byte[] nv21, int width, int height, Rect rect) {
+    public static Bitmap cropNv21ToBitmap(@NonNull byte[] nv21, int width, int height, Rect rect) {
         Rect cropRect = getBestRect(width, height, rect);
         cropRect.left &= ~3;
         cropRect.top &= ~3;
