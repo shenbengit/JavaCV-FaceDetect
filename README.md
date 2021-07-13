@@ -339,4 +339,8 @@ FaceDetectRequestDialog dialog = FaceDetectRequestDialog.builder(this,
                         System.out.println("无人--->");
                     }
                 }).build();
+
+dialog.show();
+dialog.dismiss();//dialog.cancel();
+dialog.destroy();
 ```
