@@ -54,7 +54,7 @@ dependencies {
 ```
 ## 使用事例
 - FaceDetectCameraView
-> 布局事例
+> 布局示例
 ```Xml
     <com.shencoder.javacv_facedetect.FaceDetectCameraView
         android:id="@+id/fdv"
@@ -96,7 +96,7 @@ dependencies {
 
     </declare-styleable>
 ```
->代码事例    
+>代码示例
 ```java
 FaceDetectCameraView fdv = findViewById(R.id.fdv);
 //设置摄像头相关回调
@@ -198,4 +198,145 @@ fdv.setLifecycleOwner(this);
 //fdv.close();
 //fdv.destroy();
 
+```
+- FaceDetectRequestDialog
+> 代码示例
+```java
+FaceDetectRequestDialog dialog = FaceDetectRequestDialog.builder(this,
+                new RequestDialogLayoutCallback() {
+                    /**
+                     * 设置{@link FaceDetectRequestDialog#setContentView(int)}
+                     *
+                     * @return
+                     */
+                    @Override
+                    public int getLayoutId() {
+                        return R.layout.dialog_face_detect_request;
+                    }
+                    
+                    /**
+                     * 设置{@link RequestDialogLayoutCallback#getLayoutId()} 中 {@link FaceDetectCameraView}的id
+                     *
+                     * @return
+                     */
+                    @Override
+                    public int getFaceDetectCameraViewId() {
+                        return R.id.detectCameraView;
+                    }
+                    
+                    /**
+                     * init view
+                     * (e.g. {@code dialog.findViewById(id)}).
+                     *
+                     * @param dialog FaceDetectRequestDialog
+                     */
+                    @Override
+                    public void initView(FaceDetectRequestDialog dialog) {
+//                        Button btnClose = dialog.findViewById(R.id.btnClose);
+                    }
+
+                    /**
+                     * Called when the dialog is starting.
+                     *
+                     * @param dialog FaceDetectRequestDialog
+                     */
+                    @Override
+                    public void onStart(FaceDetectRequestDialog dialog) {
+
+                    }
+
+                    /**
+                     * Called when the dialog is starting.
+                     *
+                     * @param dialog FaceDetectRequestDialog
+                     */
+                    @Override
+                    public void onStop(FaceDetectRequestDialog dialog) {
+
+                    }
+                    
+                    /**
+                     * @param dialog FaceDetectRequestDialog
+                     * @see FaceDetectRequestDialog#destroy()
+                     */
+                    @Override
+                    public void onDestroy(FaceDetectRequestDialog dialog) {
+
+                    }
+                },
+                new RequestCallback() {
+                
+                    /**
+                     * 生成用于网络请求的{@link OkHttpClient}
+                     * 自动调用{@link OkHttpClient.Builder#build()}
+                     *
+                     * @param builder
+                     * @return
+                     */
+                    @Override
+                    @NonNull
+                    public OkHttpClient.Builder generateOkhttpClient(OkHttpClient.Builder builder) {
+                        return builder;
+                    }
+
+                    /**
+                     * 生成网络请求的{@link Request}
+                     * 自行根据人脸照片数据进行二次封装
+                     * <p>
+                     * 自动调用{@link Request.Builder#build()}
+                     *
+                     * @param builder
+                     * @return
+                     */
+                    @NonNull
+                    @Override
+                    public Request.Builder generateRequest(Request.Builder builder, byte[] data, int width, int height, List<Rect> faceRectList) {
+                        Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
+//                        Bitmap bitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, faceRectList.get(0));
+                        if (bitmap != null) {
+                            String base64 = Nv21ToBitmapUtil.bitmapToBase64(bitmap, 100);
+                            RequestFaceBean bean = new RequestFaceBean("imagecompare", base64);
+                            RequestBody body = RequestBody.create(MediaType.parse("application/json"), GsonUtil.toJson(bean));
+                            builder.url("http://192.168.2.186:25110")
+                                    .post(body);
+                        }
+                        return builder;
+                    }
+
+                    @Override
+                    public void onRequestStart() {
+
+                    }
+
+                    @Override
+                    public void onRequestFailure(Exception e) {
+                        Toast.makeText(MainActivity.this, "人脸识别Error：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        dialog.needRetryDelay(2000L);
+                    }
+
+                    @Override
+                    public void onRequestSuccess(String bodyStr) {
+                        ResultBean resultBean = GsonUtil.jsonToBean(bodyStr, ResultBean.class);
+                        if (resultBean.getResCode() == 1) {
+                            Toast.makeText(MainActivity.this, "人脸识别成功:" + resultBean.getData().getUserName(), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "人脸识别失败", Toast.LENGTH_SHORT).show();
+                            dialog.needRetryDelay(2000L);
+                        }
+                    }
+                })
+                .setPreviewSizeSelector(source -> Collections.singletonList(new Size(1280, 720)))
+                .setShowLoadingDialog(true)
+                .setCameraListener(exception -> Toast.makeText(MainActivity.this, "摄像头开启异常：" + exception.getMessage(), Toast.LENGTH_SHORT).show())
+                .setAnybodyCallback(new AnybodyCallback() {
+                    @Override
+                    public void somebody() {
+                        System.out.println("有人--->");
+                    }
+
+                    @Override
+                    public void nobody() {
+                        System.out.println("无人--->");
+                    }
+                }).build();
 ```
