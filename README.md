@@ -1,5 +1,6 @@
 # JavaCV-FaceDetect
 Android端基于JavaCV实现人脸检测功能
+> 目前仅支持摄像机预览角度为0°
 ## 实现功能
 - 人脸检测功能：[FaceDetectCameraView](https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/lib/src/main/java/com/shencoder/javacv_facedetect/FaceDetectCameraView.java)
 - 人脸检测后自动网络请求功能：[FaceDetectRequestDialog](https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/lib/src/main/java/com/shencoder/javacv_facedetect/FaceDetectRequestDialog.java)
