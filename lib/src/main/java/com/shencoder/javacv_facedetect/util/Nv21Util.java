@@ -11,9 +11,7 @@ import androidx.annotation.Nullable;
 import com.arcsoft.imageutil.ArcSoftImageFormat;
 import com.arcsoft.imageutil.ArcSoftImageUtil;
 import com.arcsoft.imageutil.ArcSoftImageUtilError;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.arcsoft.imageutil.ArcSoftRotateDegree;
 
 /**
  * 使用虹软官方提供的图片剪裁、转换框架
@@ -23,25 +21,43 @@ import java.io.IOException;
  * @date 2021/7/9 9:58
  * @email 714081644@qq.com
  */
-public class Nv21ToBitmapUtil {
+public class Nv21Util {
     private static final String TAG = "Nv21ToBitmapUtil";
 
+
+    /**
+     * nv21 数据选择
+     *
+     * @param originImageData
+     * @param width
+     * @param height
+     * @param orient
+     * @return
+     */
     @Nullable
-    public static String bitmapToBase64(@Nullable Bitmap bitmap, int quality) {
-        if (bitmap == null) {
-            return null;
+    public static byte[] rotateNv21(byte[] originImageData, int width, int height, int orient) {
+        ArcSoftRotateDegree rotateDegree;
+        switch (orient) {
+            case 90:
+                rotateDegree = ArcSoftRotateDegree.DEGREE_270;
+                break;
+            case 180:
+                rotateDegree = ArcSoftRotateDegree.DEGREE_180;
+                break;
+            case 270:
+                rotateDegree = ArcSoftRotateDegree.DEGREE_90;
+                break;
+            case 0:
+            default:
+                return originImageData;
         }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, bos);
-        try {
-            return Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
-        } finally {
-            try {
-                bos.close();
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
+
+        byte[] rotateImageData = ArcSoftImageUtil.createImageData(width, height, ArcSoftImageFormat.NV21);
+        int result = ArcSoftImageUtil.rotateImage(originImageData, rotateImageData, width, height, rotateDegree, ArcSoftImageFormat.NV21);
+        if (result == ArcSoftImageUtilError.CODE_SUCCESS) {
+            return rotateImageData;
         }
+        return null;
     }
 
     /**

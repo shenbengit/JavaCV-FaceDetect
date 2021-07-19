@@ -50,6 +50,8 @@ import static org.bytedeco.opencv.global.opencv_core.CV_8UC1;
  * 基于JavaCV实现人脸检测功能
  * 基于{@link CameraView}
  * 人脸检测View
+ * <p>
+ * 目前仅支持camera预览角度为0°
  *
  * @author ShenBen
  * @date 2021/7/7 10:37
@@ -189,7 +191,13 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
                     mat = initGrayImage(width, height);
                     mGrayMat = mat;
                 }
-                processImage(mClassifier, mat, mFaceRectVector, frame.getData(), width, height);
+                //目前仅支持摄像机角度为0°
+                byte[] data = frame.getData();
+//                byte[] newData = Nv21Util.rotateNv21(data, width, height, frame.getRotationToUser());
+//                if (newData == null) {
+//                    return;
+//                }
+                processImage(mClassifier, mat, mFaceRectVector, data, width, height);
             }
         });
         loadClassifierCascade(classifierFileRes, null);

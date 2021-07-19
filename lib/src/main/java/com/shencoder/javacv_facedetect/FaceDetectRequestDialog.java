@@ -71,6 +71,8 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
     @CallSuper
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(builder.mLayoutCallback.getLayoutId());
+        setCancelable(false);
+        setCanceledOnTouchOutside(false);
         mOkHttpClient = builder.mRequestCallback.generateOkhttpClient(new OkHttpClient.Builder()).build();
         detectCameraView = findViewById(builder.mLayoutCallback.getFaceDetectCameraViewId());
         if (detectCameraView == null) {
@@ -385,7 +387,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                 }
                 loadingDialog.show();
             }
-            builder.mRequestCallback.onRequestStart();
+            builder.mRequestCallback.onRequestStart(this);
         });
     }
 
@@ -396,7 +398,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                     loadingDialog.cancel();
                 }
             }
-            builder.mRequestCallback.onRequestFailure(e);
+            builder.mRequestCallback.onRequestFailure(e, this);
         });
     }
 
@@ -407,7 +409,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
                     loadingDialog.cancel();
                 }
             }
-            builder.mRequestCallback.onRequestSuccess(bodyStr);
+            builder.mRequestCallback.onRequestSuccess(bodyStr, this);
         });
     }
 

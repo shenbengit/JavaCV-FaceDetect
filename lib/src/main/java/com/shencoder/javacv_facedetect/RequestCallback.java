@@ -47,7 +47,7 @@ public interface RequestCallback {
      * 网络请求开始
      */
     @MainThread
-    default void onRequestStart(){
+    default void onRequestStart(FaceDetectRequestDialog dialog) {
 
     }
 
@@ -57,7 +57,7 @@ public interface RequestCallback {
      * @param e error
      */
     @MainThread
-    void onRequestFailure(Exception e);
+    void onRequestFailure(Exception e, FaceDetectRequestDialog dialog);
 
     /**
      * 网络请求成功
@@ -65,5 +65,5 @@ public interface RequestCallback {
      * @param bodyStr 网络请求返回的String字符串
      */
     @MainThread
-    void onRequestSuccess(String bodyStr);
+    void onRequestSuccess(String bodyStr, FaceDetectRequestDialog dialog);
 }
