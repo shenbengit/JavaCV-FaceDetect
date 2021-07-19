@@ -278,7 +278,7 @@ public class FaceDetectRequestDialog extends AppCompatDialog {
      * @param resId    级联分类器
      * @param callback 加载结果回调
      */
-    public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierErrorCallback callback) {
+    public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierCallback callback) {
         if (detectCameraView != null) {
             detectCameraView.loadClassifierCascade(resId, callback);
         }

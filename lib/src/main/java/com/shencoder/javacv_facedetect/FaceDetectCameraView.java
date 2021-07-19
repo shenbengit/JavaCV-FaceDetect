@@ -191,7 +191,7 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
                     mat = initGrayImage(width, height);
                     mGrayMat = mat;
                 }
-                //目前仅支持摄像机角度为0°
+                //目前仅支持camera预览角度为0°
                 byte[] data = frame.getData();
 //                byte[] newData = Nv21Util.rotateNv21(data, width, height, frame.getRotationToUser());
 //                if (newData == null) {
@@ -374,10 +374,13 @@ public class FaceDetectCameraView extends FrameLayout implements LifecycleObserv
      * @param resId    级联分类器
      * @param callback 加载结果回调
      */
-    public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierErrorCallback callback) {
+    public void loadClassifierCascade(@RawRes final int resId, @Nullable LoadClassifierCallback callback) {
         executorService.submit(() -> {
             try {
                 loadClassifierCascade(resId);
+                if (callback != null) {
+                    callback.onSuccess();
+                }
             } catch (Exception exception) {
                 Log.e(TAG, "loadClassifierCascade exception: " + exception.getMessage());
                 if (callback != null) {

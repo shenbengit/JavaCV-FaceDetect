@@ -7,7 +7,10 @@ import androidx.annotation.WorkerThread;
  * @date 2021/7/9 17:16
  * @email 714081644@qq.com
  */
-public interface LoadClassifierErrorCallback {
+public interface LoadClassifierCallback {
+
+    @WorkerThread
+    void onSuccess();
 
     @WorkerThread
     void onError(Exception e);
