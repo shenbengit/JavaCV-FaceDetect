@@ -193,6 +193,18 @@ fdv.setFaceRectStrokeWidth(2f);
 fdv.needRetry();
 //延迟重试操作
 fdv.needRetryDelay(1000L);
+//设置目标检测的级联分类器
+fdv.loadClassifierCascade(R.raw.haarcascade_eye, new LoadClassifierCallback() {
+    @Override
+    public void onSuccess() {
+                
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
+});
 
 fdv.setLifecycleOwner(this);
 //fdv.open();
@@ -357,6 +369,24 @@ FaceDetectRequestDialog requestDialog = FaceDetectRequestDialog.builder(this,
                         System.out.println("无人--->");
                     }
                 }).build();
+                
+//重试操作
+requestDialog.needRetry();
+//延迟重试操作
+requestDialog.needRetryDelay(1000L);
+//设置目标检测的级联分类器
+requestDialog.loadClassifierCascade(R.raw.haarcascade_eye, new LoadClassifierCallback() {
+    @Override
+    public void onSuccess() {
+                
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
+});
+
 
 requestDialog.show();
 requestDialog.dismiss();//requestDialog.cancel();
@@ -377,6 +407,8 @@ Nv21Util.cropNv21ToBitmap(@NonNull byte[] nv21, int width, int height, Rect rect
 //Bitmap转base64
 BitmapUtil.bitmapToBase64(@Nullable Bitmap bitmap, int quality);
 ```
+## 级联分类器
+[基于OpenCV源码](https://github.com/shenbengit/JavaCV-FaceDetect/tree/master/lib/src/main/res/raw)
 
 # [License](https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/LICENSE)
 
