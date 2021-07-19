@@ -145,11 +145,11 @@ fdv.setOnFaceDetectListener(new OnFaceDetectListener() {
     @WorkerThread
     @Override
     public void somebodyFirstFrame(byte[] data, int width, int height, List<Rect> faceRectList) {
+        Bitmap bitmap = Nv21Util.nv21ToBitmap(data, width, height);
         if (!faceRectList.isEmpty()) {
             Rect rect = faceRectList.get(0);
             //剪裁人脸
-            Bitmap cropBitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, rect);
-            Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
+            Bitmap cropBitmap = Nv21Util.cropNv21ToBitmap(data, width, height, rect);
          }
     }
         
@@ -202,7 +202,7 @@ fdv.setLifecycleOwner(this);
 - FaceDetectRequestDialog
 > 代码示例
 ```java
-FaceDetectRequestDialog dialog = FaceDetectRequestDialog.builder(this,
+FaceDetectRequestDialog requestDialog = FaceDetectRequestDialog.builder(this,
                 new RequestDialogLayoutCallback() {
                     /**
                      * 设置{@link FaceDetectRequestDialog#setContentView(int)}
@@ -291,31 +291,48 @@ FaceDetectRequestDialog dialog = FaceDetectRequestDialog.builder(this,
                     @NonNull
                     @Override
                     public Request.Builder generateRequest(Request.Builder builder, byte[] data, int width, int height, List<Rect> faceRectList) {
-                        Bitmap bitmap = Nv21ToBitmapUtil.nv21ToBitmap(data, width, height);
-//                        Bitmap bitmap = Nv21ToBitmapUtil.cropNv21ToBitmap(data, width, height, faceRectList.get(0));
+                        Bitmap bitmap = Nv21Util.nv21ToBitmap(data, width, height);
+//                        Bitmap bitmap = Nv21Util.cropNv21ToBitmap(data, width, height, faceRectList.get(0));
                         if (bitmap != null) {
-                            String base64 = Nv21ToBitmapUtil.bitmapToBase64(bitmap, 100);
-                            RequestFaceBean bean = new RequestFaceBean("imagecompare", base64);
+                            String base64 = BitmapUtil.bitmapToBase64(bitmap, 100);
+                            RequestFaceBean bean = new RequestFaceBean("cmd", base64);
                             RequestBody body = RequestBody.create(MediaType.parse("application/json"), GsonUtil.toJson(bean));
-                            builder.url("http://192.168.2.186:25110")
+                            builder.url("http://xxx:8080")
                                     .post(body);
                         }
                         return builder;
                     }
 
+                    /**
+                     * 网络请求开始
+                     *
+                     * @param dialog FaceDetectRequestDialog
+                     */
                     @Override
-                    public void onRequestStart() {
+                    public void onRequestStart(FaceDetectRequestDialog dialog) {
 
                     }
 
+                    /**
+                     * 网络请求失败
+                     *
+                     * @param e      error
+                     * @param dialog FaceDetectRequestDialog
+                     */
                     @Override
-                    public void onRequestFailure(Exception e) {
+                    public void onRequestFailure(Exception e, FaceDetectRequestDialog dialog) {
                         Toast.makeText(MainActivity.this, "人脸识别Error：" + e.getMessage(), Toast.LENGTH_SHORT).show();
                         dialog.needRetryDelay(2000L);
                     }
 
+                    /**
+                     * 网络请求成功
+                     *
+                     * @param bodyStr 网络请求返回的String字符串
+                     * @param dialog  FaceDetectRequestDialog
+                     */
                     @Override
-                    public void onRequestSuccess(String bodyStr) {
+                    public void onRequestSuccess(String bodyStr, FaceDetectRequestDialog dialog) {
                         ResultBean resultBean = GsonUtil.jsonToBean(bodyStr, ResultBean.class);
                         if (resultBean.getResCode() == 1) {
                             Toast.makeText(MainActivity.this, "人脸识别成功:" + resultBean.getData().getUserName(), Toast.LENGTH_SHORT).show();
@@ -340,20 +357,25 @@ FaceDetectRequestDialog dialog = FaceDetectRequestDialog.builder(this,
                     }
                 }).build();
 
-dialog.show();
-dialog.dismiss();//dialog.cancel();
-dialog.destroy();
+requestDialog.show();
+requestDialog.dismiss();//requestDialog.cancel();
+requestDialog.destroy();
 ```
 
-- Nv21ToBitmapUtil
+- Nv21Util
 > nv21转bitmap工具类
 ```java
-//Bitmap转base64
-Nv21ToBitmapUtil.bitmapToBase64(@Nullable Bitmap bitmap, int quality);
 //nv21转Bitmap
-Nv21ToBitmapUtil.nv21ToBitmap(@NonNull byte[] nv21, int width, int height);
+Nv21Util.nv21ToBitmap(@NonNull byte[] nv21, int width, int height);
 //nv21剪裁转Bitmap，注：会进行二次转换，剪裁出的图片要比提供位置矩阵的略大
-Nv21ToBitmapUtil.cropNv21ToBitmap(@NonNull byte[] nv21, int width, int height, Rect rect);
+Nv21Util.cropNv21ToBitmap(@NonNull byte[] nv21, int width, int height, Rect rect);
 ```
+
+- BitmapUtil
+```java
+//Bitmap转base64
+BitmapUtil.bitmapToBase64(@Nullable Bitmap bitmap, int quality);
+```
+
 # [License](https://github.com/shenbengit/JavaCV-FaceDetect/blob/master/LICENSE)
 
