@@ -37,6 +37,7 @@ android {
         pickFirst 'META-INF/native-image/android-arm64/jnijavacpp/jni-config.json'
         pickFirst 'META-INF/native-image/android-arm/jnijavacpp/reflect-config.json'
         pickFirst 'META-INF/native-image/android-arm64/jnijavacpp/reflect-config.json'
+        exclude 'META-INF/*.kotlin_module'
     }
 }
 
@@ -51,5 +52,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.7'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
     implementation project(path: ':lib')
+    implementation 'com.iqiyi.xcrash:xcrash-android-lib:3.0.0'
+    implementation 'com.permissionx.guolindev:permissionx:1.4.0'
 //    implementation 'com.github.shenbengit:JavaCV-FaceDetect:0.0.5'
 }
