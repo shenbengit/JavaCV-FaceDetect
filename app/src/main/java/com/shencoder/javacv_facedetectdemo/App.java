@@ -1,8 +1,8 @@
 package com.shencoder.javacv_facedetectdemo;
 
-import android.app.Application;
 import android.content.Context;
 
+import androidx.multidex.MultiDexApplication;
 
 import xcrash.XCrash;
 
@@ -11,7 +11,7 @@ import xcrash.XCrash;
  * @date 2021/7/14 10:19
  * @email 714081644@qq.com
  */
-public class App extends Application {
+public class App extends MultiDexApplication {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
